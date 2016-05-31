@@ -17,18 +17,7 @@ Steps in a cell:
             True: dead
             False: pass
 
-
 '''
-
-import random
-
-listID = []
-
-def createPopulation():
-    listID.append(1)
-    return len(listID)
-def retirePopulation (ID):
-    listID[ID] = 0
 
 
 '''------------------------'''
@@ -47,28 +36,33 @@ class motherCell:
         self.reproductibility = 0
         self.mortality = 0
 
-        self.feeds = feeds #[0, 0, 0, 0, 0, 0]
+        self.feeds = feeds #[0, 0, 0, 0, 0]
 
 
     '''------------------------'''
     def live(self):
-        self.refershSkills(self.time, self.feeds, self.hungry, self.mutability, self.reproductibility, self.mortality)
+        self.refershSkills()
         self.reproduction(self.mutability, self.feeds)
         self.food(self.feeds, self.instinct)
         self.dead(self.mortality, self.ID)
 
     '''------------------------'''
-    def refershSkills(self, time, feeds, hungry, mutability, reproductibility, mortality ):
-        return 0
-    def reproduction(self, mutability, feeds):
-        return 0
-    def food(self, feeds, instinct):
-        return 0
-    def dead(self, mortality, ID):
-        return 0
+    def refershSkills(self):
+        #time, feeds, hungry, mutability, reproductibility, mortality
+        pass
+    def reproduction(self):
+        #mutability, feeds
+        pass
+    def food(self):
+        #feeds, instinct
+        pass
+    def dead(self):
+        #mortality
+        if self.mortality < 10:
+            goverment.retirePopulation(self.ID)
 
     '''------------------------'''
-    def smeel(self, instinct, position):
+    def smell(self, instinct, position):
         return 0
     def eat(self, feeds):
         return 0
@@ -76,13 +70,50 @@ class motherCell:
         return 0
 
 
+class goverment:
+    ''' manage population '''
+    def __init__(self, ):
+        self.listID = []
+
+    def createPopulation(self):
+        IDx = len(goverment.listID)
+        goverment.listID.append(motherCell(IDx, (0,0), 50, 50, 50, [50, 50, 50, 50, 50]))
+
+    def retirePopulation (self, IDx):
+        goverment.listID[IDx] = 0 #instancia cell no esta borrada creo
 
 
+class map:
+    '''manage map(x,y); collision, edges, plot... '''
+    def __init__(self,  size ):
+        self.size
+        self.matrix
+
+    def collision(self, position):
+        #return True if abailable
+        pass
+
+
+
+
+class nature:
+    '''manage feed seeds, delete feeds (eat by cells)'''
+    def __init__(self, feeds, matrix, abundance):
+        self.abundance = abundance
+
+    def initialSeed(selfself):
+        pass
+
+    def deleteFeed(self, position, feeds):
+        pass
+
+    def createFeed(self):
+        pass
 
 
 if __name__ == '__main__':
-    EVA = motherCell(createPopulation(), (0,0), 50, 50, 50, [50, 50, 50, 50, 50, 50])
+    goverment = goverment()
+    goverment.createPopulation()
     print "Iniciada la vida"
-    print "Primera habitante:", EVA.ID, "Instinto:", EVA.instinct
+    goverment.retirePopulation(goverment.listID[0].ID)
 
-    print listID
