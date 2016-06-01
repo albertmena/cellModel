@@ -19,6 +19,10 @@ Steps in a cell:
 
 '''
 
+import map
+import nature
+import goverment
+
 
 '''------------------------'''
 
@@ -69,51 +73,4 @@ class motherCell:
     def move (self, agility, x, y):
         return 0
 
-
-class goverment:
-    ''' manage population '''
-    def __init__(self, ):
-        self.listID = []
-
-    def createPopulation(self):
-        IDx = len(goverment.listID)
-        goverment.listID.append(motherCell(IDx, (0,0), 50, 50, 50, [50, 50, 50, 50, 50]))
-
-    def retirePopulation (self, IDx):
-        goverment.listID[IDx] = 0 #instancia cell no esta borrada creo
-
-
-class map:
-    '''manage map(x,y); collision, edges, plot... '''
-    def __init__(self,  size ):
-        self.size
-        self.matrix
-
-    def collision(self, position):
-        #return True if abailable
-        pass
-
-
-
-
-class nature:
-    '''manage feed seeds, delete feeds (eat by cells)'''
-    def __init__(self, feeds, matrix, abundance):
-        self.abundance = abundance
-
-    def initialSeed(selfself):
-        pass
-
-    def deleteFeed(self, position, feeds):
-        pass
-
-    def createFeed(self):
-        pass
-
-
-if __name__ == '__main__':
-    goverment = goverment()
-    goverment.createPopulation()
-    print "Iniciada la vida"
-    goverment.retirePopulation(goverment.listID[0].ID)
 
