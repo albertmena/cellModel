@@ -26,7 +26,7 @@ import goverment
 
 '''------------------------'''
 
-class motherCell:
+class MotherCell:
     def __init__(self,ID,position, agility, instinct, mutability, feeds):
         self.ID = ID
         self.time = 0

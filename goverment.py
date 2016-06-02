@@ -3,25 +3,27 @@ import map
 import nature
 
 
-class goverment:
+class Goverment:
     ''' manage population '''
     def __init__(self ):
         self.listID = []
 
     def createPopulation(self):
         IDx = len(goverment.listID)
-        goverment.listID.append(cellModel.motherCell(IDx, (0,0), 50, 50, 50, [50, 50, 50, 50, 50]))
+        self.listID.append(cellModel.MotherCell(IDx, (0,0), 50, 50, 50, [50, 50, 50, 50, 50]))
 
     def retirePopulation (self, IDx):
-        goverment.listID[IDx] = 0 #instancia cell no esta borrada creo
+        self.listID[IDx] = 0 #instancia cell no esta borrada creo
 
 
 
 if __name__ == '__main__':
-    goverment = goverment()
-    map = map.map(1000)
-    nature = nature.nature(map, 50)
+    goverment = Goverment()
+    nature = nature.Nature(5)
+    map = map.Map(100, nature.num_feeds)
+
     goverment.createPopulation()
     print "Iniciada la vida"
-    goverment.retirePopulation(goverment.listID[0].ID)
+    goverment .retirePopulation(goverment .listID[0].ID)
 
+    map.ploting()

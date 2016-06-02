@@ -3,11 +3,11 @@ import map
 import goverment
 
 
-
-class nature:
+class Nature:
     '''manage feed seeds, delete feeds (eat by cells)'''
-    def __init__(self,  matrix, abundance):
+    def __init__(self, abundance):
         self.abundance = abundance
+        self.num_feeds = 5
         self.feeds = 0
 
     def initialSeed(selfself):
