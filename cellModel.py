@@ -1,6 +1,6 @@
 '''
 Steps in a cell:
-    1/ refresh skills:
+    1/ update skills:
         - hungry(feeds)
         - mutability(feeds)
         - reproductibility(feeds, time)
@@ -51,26 +51,34 @@ class MotherCell:
         self.dead(self.mortality, self.ID)
 
     '''------------------------'''
-    def refershSkills(self):
-        #time, feeds, hungry, mutability, reproductibility, mortality
-        pass
+    def updateSkills(self):
+        #time, feeds, mutability, reproductibility, mortality
+        self.food()#hungry
+
     def reproduction(self):
         #mutability, feeds
         pass
+
     def food(self):
         #feeds, instinct
-        pass
+        if sum(self.feeds[:-2])/(len(self.feeds) - 1) < 50:
+            self.smell()
+        else:
+            pass
     def dead(self):
         #mortality
         if self.mortality < 10:
             goverment.retirePopulation(self.ID)
 
     '''------------------------'''
-    def smell(self, instinct, position):
-        return 0
+    def smell(self):
+        position_smell = self.position + (4,4)
+        self.move(position_smell)
+
     def eat(self, feeds):
         return 0
-    def move (self, agility, x, y):
-        return 0
+    def move (self, position_smell):
+        #manage agility
+        goverment.map_i.move(position_smell)
 
 

@@ -18,9 +18,4 @@
             True: dead
             False: pass
             
-**Futuras implementaciones**
-1/ Funciones aleatorias que añadan funcionalidades
-2/ Tamaño variable de celulas
-3/ Relaciones dual para reproduccion
-4/ Varios hijos en reproduccion
-5/ Añadir metabolismo como parámetro
+

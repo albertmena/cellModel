@@ -9,8 +9,8 @@ class Goverment:
         self.listID = []
 
     def createPopulation(self):
-        IDx = len(goverment.listID)
-        self.listID.append(cellModel.MotherCell(IDx, (0,0), 50, 50, 50, [50, 50, 50, 50, 50]))
+        IDx = len(goverment_i.listID)
+        self.listID.append(cellModel.MotherCell(IDx, (5,5), 50, 50, 50, [50, 50, 50, 50, 50]))
 
     def retirePopulation (self, IDx):
         self.listID[IDx] = 0 #instancia cell no esta borrada creo
@@ -18,12 +18,16 @@ class Goverment:
 
 
 if __name__ == '__main__':
-    goverment = Goverment()
-    nature = nature.Nature(5)
-    map = map.Map(100, nature.num_feeds)
+    goverment_i = Goverment()
+    nature_i = nature.Nature(5)
+    map_i = map.Map(100, nature_i.num_feeds)
 
-    goverment.createPopulation()
+    goverment_i.createPopulation()
+    cell = goverment_i.listID[0]
+
     print "Iniciada la vida"
-    goverment .retirePopulation(goverment .listID[0].ID)
 
-    map.ploting()
+    goverment_i.retirePopulation(goverment_i.listID[0].ID)
+
+    map_i.ploting()
+
