@@ -19,8 +19,6 @@ Steps in a cell:
 
 '''
 
-import map
-import nature
 import goverment
 
 
@@ -72,13 +70,15 @@ class MotherCell:
 
     '''------------------------'''
     def smell(self):
-        position_smell = self.position + (4,4)
+        position_smell = (self.position[0] + 4, self.position[0] + 4)
         self.move(position_smell)
+        print "smell"
 
     def eat(self, feeds):
         return 0
-    def move (self, position_smell):
+
+    def move(self, position_smell):
         #manage agility
-        goverment.map_i.move(position_smell)
+        goverment.map_i.move(self.position, position_smell)
 
 
