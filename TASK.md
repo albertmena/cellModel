@@ -1,6 +1,6 @@
 **TASK**
 
-manage list of cinstances of class, why dont recognice methods of class?
+plo interactive withthreads  tech
 seed feeds in map
 create/delete feed
 
