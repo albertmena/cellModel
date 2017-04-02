@@ -15,16 +15,22 @@ class Goverment:
         self.listCells = []
         self.globalTime = 0
 
-    def createPopulation(self, position):
-        IDx = len(self.listID)
-        self.listID.append(IDx)
-        self.listCells.append(MotherCell(IDx, goverment_i.globalTime, position, 5, 2, 5, 5, [50, 50], 5))
-                    #(ID, time, positio n, agility, smellInstinct, reproduction, mutability, feeds, mortality)
+    def createPopulation(self, position, map):
+        if  map.createCell(position) == False:
+            return False
+        else:
+            IDx = len(self.listID)
+            self.listID.append(IDx)
+            self.listCells.append(MotherCell(IDx, goverment_i.globalTime, position, 5, 2, 5, 5, [50, 50], 5))
+                        #(ID, time, positio n, agility, smellInstinct, reproduction, mutability, feeds, mortality)
+            return True
+
     def retirePopulation (self, IDx):
         self.listID[IDx] = 0 #instancia cell no esta borrada creo
 
     def clock(self):
         self.globalTime += T
+
 
 '''------------MAP'''
 class Map:
@@ -58,18 +64,24 @@ class Map:
         else:
             return False
 
+    def createCell(self, pos):
+        if self.map_cells[pos[0]][pos[1]] == 1:
+            return False
+        else:
+            self.map_cells[pos[0]][pos[1]] = 1
+            return True
+
     def ploting(self):
-        pylab.axis([0, self.size, 0, self.size])
-        pylab.ion()  # in order to enable interactive plotting
+        #pylab.axis([0, self.size, 0, self.size])
+        #pylab.ion()  # in order to enable interactive plotting
+        #pylab.title('cels')
         while True:
-            pylab.matshow(self.map_cells, fignum=1, cmap=plt.cm.gray)
-            pylab.title('cels')
-            #for i in range(0,self.num_feeds):#show one figure for each feed
-            #    pylab.title('feed {}'.format(i))
-            #    pylab.matshow(self.map_feeds[i][:][:], fignum=i, cmap=plt.cm.gray)
-            pylab.pause(1)
-
-
+            plt.matshow(self.map_cells, fignum=1, cmap=plt.cm.gray)
+            # for i in range(0,self.num_feeds):#show one figure for each feed
+            #     pylab.title('feed {}'.format(i))
+            #     pylab.matshow(self.map_feeds[i][:][:], fignum=i, cmap=plt.cm.gray)
+            plt.show()
+            time.sleep(1)
 
 '''------------NATURE'''
 class Nature:
@@ -88,6 +100,7 @@ class Nature:
     def createFeed(self, position, feed):
         map_i.map_feeds[feed][position[0]][position[1]] = \
             map_i.map_feeds[feed][position[0]][position[1]] + 1
+
 
 '''------------CELLS'''
 class MotherCell:
@@ -162,29 +175,28 @@ class MotherCell:
     def smell(self):
         for smellingPos in self.sweep:
             pos = (self.position[0] + smellingPos[0], self.position[1] + smellingPos[1])
-            if pos[0] < 0 or pos[1] < 0 or pos[0] or \
-                pos[0] >= map_i.size or pos[1] >= map_i.size:
-                for i, x in enumerate(self.feeds):
+            if not (pos[0] < 0 or pos[1] < 0 or pos[0] >= map_i.size or pos[1] >= map_i.size):
+                for i in range(len(self.feeds)):
                     if nature_i.map_feeds[i][pos[0]][pos[1]] != 0:
                         self.moving = True
-                        actualPos = self.move(pos)
-                        if actualPos == pos:
+                        if self.move(pos) == pos:
                             self.moving = False
-                            self.virtualPos = 0
-                            self.feeds[i] += 1
-                            nature_i.map_feeds[x][self.pos] -= 1
+                            self.eat((i, pos[0], pos[1]))
+                            return
 
 
     def move(self, position_smelled):
         #manage agility
         range = (position_smelled[0] - self.position[0], position_smelled[1] - self.position[1])
         direct = (range[0] / (range[0] + eps), (range[1] / (range[1] + eps)))
-        self.virtualPos = (self.virtualPos[0] + (T * self.agility)* direct[0], (T * self.agility)* direct[1])
+        self.virtualPos = (self.position[0] + (T * self.agility)* direct[0],
+                           self.position[1] + (T * self.agility)* direct[1])
         return int(round(self.virtualPos[0])), int(round(self.virtualPos[1]))
 
 
-    def eat(self, feeds):
-        return 0
+    def eat(self, food):#food = (feed, pos, pos)
+        self.feeds[food[0]] += 1
+        nature_i.map_feeds[food[0]][food[1]][food[2]] -= 1
 
 
     def sweep(self):
@@ -213,29 +225,20 @@ class MotherCell:
                     self.sweep.append((SW))
 
 
-
-
-
 '''-----------MAIN'''
 if __name__ == '__main__':
 
     goverment_i = Goverment()
     num_feeds = 2
-    map_i = Map(10, num_feeds)#size, num of feeds
+    map_i = Map(30, num_feeds)#size, num of feeds
     nature_i = Nature(10, num_feeds)#abundance and number of feeds
     goverment_i.clock()
 
-
-    goverment_i.createPopulation((2,2))
+    created = goverment_i.createPopulation((2,2), map_i)
     t_map = threading.Thread(target=map_i.ploting)
-    print "Iniciada la vida"
-    print "Cell position: ", goverment_i.listCells[0].position
+    print ("Iniciada la vida")
+    print ("Cell position: ", goverment_i.listCells[0].position)
     t_map.start()
     time.sleep(1)
-    goverment_i.listCells[0].smell()
-    time.sleep(1)
-    goverment_i.listCells[0].smell()
-    time.sleep(1)
-    goverment_i.listCells[0].smell()
-    time.sleep(1)
-    goverment_i.listCells[0].smell()
+    for x in range(40):
+        goverment_i.listCells[0].smell()
