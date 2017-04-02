@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import threading
 import pylab
-
+T = 0.001
+eps = 0.000000001
 
 '''------------GOVERMENT'''
 class Goverment:
@@ -12,18 +13,18 @@ class Goverment:
     def __init__(self ):
         self.listID = []
         self.listCells = []
+        self.globalTime = 0
 
     def createPopulation(self, position):
-        IDx = len(goverment_i.listID)
+        IDx = len(self.listID)
         self.listID.append(IDx)
-        self.listCells.append(MotherCell(IDx, position, 50, 50, 50, [50, 50, 50, 50, 50]))
-
+        self.listCells.append(MotherCell(IDx, goverment_i.globalTime, position, 5, 2, 5, 5, [50, 50], 5))
+                    #(ID, time, positio n, agility, smellInstinct, reproduction, mutability, feeds, mortality)
     def retirePopulation (self, IDx):
         self.listID[IDx] = 0 #instancia cell no esta borrada creo
 
-    def readCell(self, ID):
-        return self.listID[ID]
-
+    def clock(self):
+        self.globalTime += T
 
 '''------------MAP'''
 class Map:
@@ -62,10 +63,11 @@ class Map:
         pylab.ion()  # in order to enable interactive plotting
         while True:
             pylab.matshow(self.map_cells, fignum=1, cmap=plt.cm.gray)
-            for i in range(0,self.num_feeds):
-                pylab.title('feed {}'.format(i))
-                pylab.matshow(self.map_feeds[i][:][:], fignum=i, cmap=plt.cm.gray)
-            pylab.pause(2)
+            pylab.title('cels')
+            #for i in range(0,self.num_feeds):#show one figure for each feed
+            #    pylab.title('feed {}'.format(i))
+            #    pylab.matshow(self.map_feeds[i][:][:], fignum=i, cmap=plt.cm.gray)
+            pylab.pause(1)
 
 
 
@@ -76,10 +78,8 @@ class Nature:
         self.abundance = abundance
         self.num_feeds = num_feeds
         self.feeds = 0
-
-    def initialSeed(self, map_i):
-        map_size = map_i.map_feeds.shape
-        map_i.map_feeds = np.random.randint(0, self.abundance, size = map_size)
+        self.map_size = map_i.map_feeds.shape
+        self.map_feeds = np.random.randint(0, self.abundance, size = self.map_size)
 
     def deleteFeed(self, position, feed):
         map_i.map_feeds[feed][position[0]][position[1]] =\
@@ -111,71 +111,121 @@ class MotherCell:
                 False: pass
 
     '''
-    def __init__(self,ID,position, agility, instinct, mutability, feeds):
+    def __init__(self,ID, time, position, agility, smellInstinct, reproduction, mutability, feeds, mortality):
         self.ID = ID
-        self.time = 0
+        self.localTime = goverment_i.globalTime - time
         self.position = position
         #Skills
-        self.agility = agility
-        self.instinct = instinct
+        self.agility = agility # from 0 to 10
+        self.smellInstinct = smellInstinct # from 0 to 10, radious of smeelled cels
+        self.mutability = mutability # from 0 to 10
+        self.mortality = mortality # from 0 to 10
+        self.reproduction = reproduction
+        self.feeds = feeds #[0, 0] from 0 to 10
+        self.sweep()# created the sweep list with smellInstinct radious
+        self.moving = False
+        self.virtualPos = (0,0)
+
+    '''------------------------'''
+    def updateStates(self):
         #states
-        self.hungry = 0
-        self.mutability = mutability
-        self.reproductibility = 0
-        self.mortality = 0
-
-        self.feeds = feeds #[0, 0, 0, 0, 0]
-
-
-    '''------------------------'''
-    def live(self):
-        self.refershSkills()
+        self.liveBar = sum(self.feeds) / len(self.feeds)#if liveBar - mortality == 0 => dead
+        self.hungry = self.liveBar - self.mortality
+        self.burnFood()
+        self.food(self.feeds, self.instinct, self.hungry)
         self.reproduction(self.mutability, self.feeds)
-        self.food(self.feeds, self.instinct)
-        self.dead(self.mortality, self.ID)
+        self.dead(self.liveBar, self.mortality, self.ID)
 
-    '''------------------------'''
-    def updateSkills(self):
-        #time, feeds, mutability, reproductibility, mortality
-        self.food()#hungry
 
     def reproduction(self):
-        #mutability, feeds
+        #mutability, feeds, time?
         pass
 
     def food(self):
         #feeds, instinct
-        if sum(self.feeds[:-2])/(len(self.feeds) - 1) < 50:
+        if self.hungry >= 4:
             self.smell()
         else:
             pass
+
+    def burnFood(self):
+        if self.localTime % 1 == 0:
+            for i, x in enumerate(self.feeds):
+                self.feeds[i] = x - 1
+
     def dead(self):
         #mortality
-        if self.mortality < 10:
+        if self.liveBar - self.mortality == 0:
             goverment_i.retirePopulation(self.ID)
 
     '''------------------------'''
     def smell(self):
-        position_smell = (self.position[0] + 2, self.position[0] + 2)
-        self.move(position_smell)
-        print "smell"
+        for smellingPos in self.sweep:
+            pos = (self.position[0] + smellingPos[0], self.position[1] + smellingPos[1])
+            if pos[0] < 0 or pos[1] < 0 or pos[0] or \
+                pos[0] >= map_i.size or pos[1] >= map_i.size:
+                for i, x in enumerate(self.feeds):
+                    if nature_i.map_feeds[i][pos[0]][pos[1]] != 0:
+                        self.moving = True
+                        actualPos = self.move(pos)
+                        if actualPos == pos:
+                            self.moving = False
+                            self.virtualPos = 0
+                            self.feeds[i] += 1
+                            nature_i.map_feeds[x][self.pos] -= 1
+
+
+    def move(self, position_smelled):
+        #manage agility
+        range = (position_smelled[0] - self.position[0], position_smelled[1] - self.position[1])
+        direct = (range[0] / (range[0] + eps), (range[1] / (range[1] + eps)))
+        self.virtualPos = (self.virtualPos[0] + (T * self.agility)* direct[0], (T * self.agility)* direct[1])
+        return int(round(self.virtualPos[0])), int(round(self.virtualPos[1]))
+
 
     def eat(self, feeds):
         return 0
 
-    def move(self, position_smell):
-        #manage agility
-        if map_i.moveInMap(self.position, position_smell):
-            self.position = position_smell
+
+    def sweep(self):
+        signo = 1;
+        SW = (0, 1);
+        j = 1;
+        self.sweep = [(0, 0), (0, 1)]
+        for i in range(1, self.smellInstinct):
+            if i % 2 != 0:
+                signo = signo * (-1)
+                row = 1;
+                col = 0
+                row = row * signo;
+                col = col * signo
+                for x in range(j):
+                    SW = (SW[0] + row, SW[1] + col)
+                    self.sweep.append(SW)
+            if i % 2 == 0:
+                j = j + 1
+                row = 0;
+                col = 1;
+                row = row * signo;
+                col = col * signo
+                for x in range(j):
+                    SW = (SW[0] + row, SW[1] + col)
+                    self.sweep.append((SW))
+
+
+
 
 
 '''-----------MAIN'''
 if __name__ == '__main__':
+
     goverment_i = Goverment()
-    num_feeds = 3
-    map_i = Map(100, num_feeds)
-    nature_i = Nature(10, num_feeds)
-    nature_i.initialSeed(map_i)
+    num_feeds = 2
+    map_i = Map(10, num_feeds)#size, num of feeds
+    nature_i = Nature(10, num_feeds)#abundance and number of feeds
+    goverment_i.clock()
+
+
     goverment_i.createPopulation((2,2))
     t_map = threading.Thread(target=map_i.ploting)
     print "Iniciada la vida"
@@ -189,5 +239,3 @@ if __name__ == '__main__':
     goverment_i.listCells[0].smell()
     time.sleep(1)
     goverment_i.listCells[0].smell()
-
-    goverment_i.retirePopulation(goverment_i.listID[0].ID)
