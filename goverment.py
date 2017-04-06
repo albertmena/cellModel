@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import threading
 import pylab
-T = 0.001
+T = 0.1
 eps = 0.000000001
 
 '''------------GOVERMENT'''
@@ -57,6 +57,8 @@ class Map:
             return True
 
     def moveInMap(self, actual_position, position):
+        if actual_position == position:
+            return True
         if self.available(position):
             self.map_cells[position[0]][position[1]] = 1
             self.map_cells[actual_position[0]][actual_position[1]] = 0
@@ -73,15 +75,13 @@ class Map:
 
     def ploting(self):
         #pylab.axis([0, self.size, 0, self.size])
-        #pylab.ion()  # in order to enable interactive plotting
-        #pylab.title('cels')
+        plt.ion()
+        plt.title('cels')
+        plt.matshow(self.map_cells, fignum=1, cmap=plt.cm.gray)
         while True:
             plt.matshow(self.map_cells, fignum=1, cmap=plt.cm.gray)
-            # for i in range(0,self.num_feeds):#show one figure for each feed
-            #     pylab.title('feed {}'.format(i))
-            #     pylab.matshow(self.map_feeds[i][:][:], fignum=i, cmap=plt.cm.gray)
-            plt.show()
-            time.sleep(1)
+            plt.draw()
+            plt.pause(0.1)
 
 '''------------NATURE'''
 class Nature:
@@ -137,7 +137,7 @@ class MotherCell:
         self.feeds = feeds #[0, 0] from 0 to 10
         self.sweep()# created the sweep list with smellInstinct radious
         self.moving = False
-        self.virtualPos = (0,0)
+        self.virtualPos = self.position
 
     '''------------------------'''
     def updateStates(self):
@@ -177,24 +177,33 @@ class MotherCell:
             pos = (self.position[0] + smellingPos[0], self.position[1] + smellingPos[1])
             if not (pos[0] < 0 or pos[1] < 0 or pos[0] >= map_i.size or pos[1] >= map_i.size):
                 for i in range(len(self.feeds)):
-                    if nature_i.map_feeds[i][pos[0]][pos[1]] != 0:
+                    feeds = nature_i.map_feeds[i][int(pos[0])][int(pos[1])]
+                    if feeds != 0:
                         self.moving = True
-                        if self.move(pos) == pos:
+                        rePos = self.move(pos)
+                        if (rePos[0] < pos[0] + 0.2 and rePos[0] > pos[0] - 0.2) and\
+                                (rePos[1] < pos[1] + 0.2 and rePos[1] > pos[1] - 0.2):
                             self.moving = False
-                            self.eat((i, pos[0], pos[1]))
-                            return
+                            self.virtualPos = (int(round(self.virtualPos[0])), int(round(self.virtualPos[1])))
+                            if map_i.moveInMap(self.position, self.virtualPos) is not True:
+                                return
+                            self.eat((i, pos[0], pos[1]), nature_i)
+                            self.position = self.virtualPos
+                        print(self.position)
+                        time.sleep(0.1)
+                        return
 
 
     def move(self, position_smelled):
         #manage agility
         range = (position_smelled[0] - self.position[0], position_smelled[1] - self.position[1])
         direct = (range[0] / (range[0] + eps), (range[1] / (range[1] + eps)))
-        self.virtualPos = (self.position[0] + (T * self.agility)* direct[0],
-                           self.position[1] + (T * self.agility)* direct[1])
-        return int(round(self.virtualPos[0])), int(round(self.virtualPos[1]))
+        self.virtualPos = (self.virtualPos[0] + (T * self.agility)* direct[0],
+                           self.virtualPos[1] + (T * self.agility)* direct[1])
+        return round(self.virtualPos[0],2), round(self.virtualPos[1],2)
 
 
-    def eat(self, food):#food = (feed, pos, pos)
+    def eat(self, food, nature_i):#food = (feed, pos, pos)
         self.feeds[food[0]] += 1
         nature_i.map_feeds[food[0]][food[1]][food[2]] -= 1
 
@@ -234,11 +243,14 @@ if __name__ == '__main__':
     nature_i = Nature(10, num_feeds)#abundance and number of feeds
     goverment_i.clock()
 
-    created = goverment_i.createPopulation((2,2), map_i)
+    goverment_i.createPopulation((2,2), map_i)
+    goverment_i.createPopulation((5,8), map_i)
+
     t_map = threading.Thread(target=map_i.ploting)
     print ("Iniciada la vida")
     print ("Cell position: ", goverment_i.listCells[0].position)
     t_map.start()
     time.sleep(1)
-    for x in range(40):
+    for x in range(200):
         goverment_i.listCells[0].smell()
+        goverment_i.listCells[1].smell()
