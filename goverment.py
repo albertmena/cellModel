@@ -1,11 +1,13 @@
 import time
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+import matplotlib.pyplot as plt #tutorial: http://pybonacci.org/2012/05/19/manual-de-introduccion-a-matplotlib-pyplot-ii-creando-y-manejando-ventanas-y-configurando-la-sesion/
 import threading
-import pylab
+from random import shuffle
+
+
 T = 0.1
 eps = 0.000000001
+agilityMin = 1/T
 
 '''------------GOVERMENT'''
 class Goverment:
@@ -15,13 +17,13 @@ class Goverment:
         self.listCells = []
         self.globalTime = 0
 
-    def createPopulation(self, position, map):
+    def createPopulation(self, position, map, agility, smellInstinct):
         if  map.createCell(position) == False:
             return False
         else:
             IDx = len(self.listID)
             self.listID.append(IDx)
-            self.listCells.append(MotherCell(IDx, goverment_i.globalTime, position, 5, 2, 5, 5, [50, 50], 5))
+            self.listCells.append(MotherCell(IDx, goverment_i.globalTime, position, agility, smellInstinct, 5, 5, [10, 10], 5))
                         #(ID, time, positio n, agility, smellInstinct, reproduction, mutability, feeds, mortality)
             return True
 
@@ -40,8 +42,6 @@ class Map:
      '''
     def __init__(self,  size, num_feeds):
         self.size = size
-        self.num_feeds = num_feeds
-        self.map_feeds = np.zeros((self.num_feeds, self.size,  self.size))#incluye recusros de celda
         self.map_cells = np.zeros((self.size,  self.size)) #ncluye posicion celula
 
     def available(self, position):
@@ -73,24 +73,32 @@ class Map:
             self.map_cells[pos[0]][pos[1]] = 1
             return True
 
-    def ploting(self):
+    def ploting_cell(self):
         #pylab.axis([0, self.size, 0, self.size])
-        plt.ion()
-        plt.title('cels')
-        plt.matshow(self.map_cells, fignum=1, cmap=plt.cm.gray)
+        plt.ion()#interactive mode ON
         while True:
-            plt.matshow(self.map_cells, fignum=1, cmap=plt.cm.gray)
+            plt.matshow(self.map_cells, fignum=1, cmap=plt.get_cmap('gray'), vmin=0, vmax=1)
+            plt.draw()
+            plt.pause(0.1)
+
+    def ploting_feeds(self):
+        plt.ion()
+        plt.matshow(nature_i.map_feeds[0], fignum=1, cmap=plt.cm.gray)
+        while True:
+            plt.matshow(nature_i.map_feeds[0], fignum=1, cmap=plt.cm.gray, vmin=0, vmax=nature_i.abundance)
             plt.draw()
             plt.pause(0.1)
 
 '''------------NATURE'''
 class Nature:
     '''manage feed seeds, delete feeds (eat by cells)'''
-    def __init__(self, abundance, num_feeds):
+    def __init__(self, abundance, num_feeds, size):
         self.abundance = abundance
         self.num_feeds = num_feeds
         self.feeds = 0
-        self.map_size = map_i.map_feeds.shape
+        self.size = size
+        map_feed_size = np.zeros((self.num_feeds, self.size,  self.size))#incluye recusros de celda
+        self.map_size = map_feed_size.shape
         self.map_feeds = np.random.randint(0, self.abundance, size = self.map_size)
 
     def deleteFeed(self, position, feed):
@@ -129,13 +137,13 @@ class MotherCell:
         self.localTime = goverment_i.globalTime - time
         self.position = position
         #Skills
-        self.agility = agility # from 0 to 10
+        self.agility = agilityMin *  agility# agility 0--5
         self.smellInstinct = smellInstinct # from 0 to 10, radious of smeelled cels
         self.mutability = mutability # from 0 to 10
         self.mortality = mortality # from 0 to 10
         self.reproduction = reproduction
         self.feeds = feeds #[0, 0] from 0 to 10
-        self.sweep()# created the sweep list with smellInstinct radious
+        self.sweep = self.sweep()# created the sweep list with smellInstinct radious
         self.moving = False
         self.virtualPos = self.position
 
@@ -148,7 +156,6 @@ class MotherCell:
         self.food(self.feeds, self.instinct, self.hungry)
         self.reproduction(self.mutability, self.feeds)
         self.dead(self.liveBar, self.mortality, self.ID)
-
 
     def reproduction(self):
         #mutability, feeds, time?
@@ -179,28 +186,24 @@ class MotherCell:
                 for i in range(len(self.feeds)):
                     feeds = nature_i.map_feeds[i][int(pos[0])][int(pos[1])]
                     if feeds != 0:
-                        self.moving = True
-                        rePos = self.move(pos)
-                        if (rePos[0] < pos[0] + 0.2 and rePos[0] > pos[0] - 0.2) and\
-                                (rePos[1] < pos[1] + 0.2 and rePos[1] > pos[1] - 0.2):
-                            self.moving = False
-                            self.virtualPos = (int(round(self.virtualPos[0])), int(round(self.virtualPos[1])))
-                            if map_i.moveInMap(self.position, self.virtualPos) is not True:
-                                return
+                        self.move(pos)
+                        if map_i.moveInMap(self.position, self.virtualPos) is not True:
+                            return
+                        else:
                             self.eat((i, pos[0], pos[1]), nature_i)
                             self.position = self.virtualPos
-                        print(self.position)
-                        time.sleep(0.1)
+                            print('position: {}, virtualPos: {}feed({}) remain: {}. sweep: {}'.format(
+                                self.position,self.virtualPos, i, feeds, smellingPos))
+                        time.sleep(0.05)
                         return
 
 
     def move(self, position_smelled):
         #manage agility
-        range = (position_smelled[0] - self.position[0], position_smelled[1] - self.position[1])
-        direct = (range[0] / (range[0] + eps), (range[1] / (range[1] + eps)))
-        self.virtualPos = (self.virtualPos[0] + (T * self.agility)* direct[0],
-                           self.virtualPos[1] + (T * self.agility)* direct[1])
-        return round(self.virtualPos[0],2), round(self.virtualPos[1],2)
+        direct = (position_smelled[0] - self.position[0], position_smelled[1] - self.position[1])
+        self.virtualPos = (self.position[0] + (T * self.agility)* direct[0],
+                           self.position[1] + (T * self.agility)* direct[1])
+        self.virtualPos = int(round(self.virtualPos[0],0)), int(round(self.virtualPos[1],0))
 
 
     def eat(self, food, nature_i):#food = (feed, pos, pos)
@@ -209,11 +212,14 @@ class MotherCell:
 
 
     def sweep(self):
+        sweep = []
         signo = 1;
         SW = (0, 1);
         j = 1;
-        self.sweep = [(0, 0), (0, 1)]
-        for i in range(1, self.smellInstinct):
+        sweep = [(0, 0), (0, 1)]
+        iterations = (self.smellInstinct*2) + 1
+        iterations = (iterations * 2) + ((iterations - 2) * 2)
+        for i in range(1, iterations):
             if i % 2 != 0:
                 signo = signo * (-1)
                 row = 1;
@@ -222,7 +228,7 @@ class MotherCell:
                 col = col * signo
                 for x in range(j):
                     SW = (SW[0] + row, SW[1] + col)
-                    self.sweep.append(SW)
+                    sweep.append(SW)
             if i % 2 == 0:
                 j = j + 1
                 row = 0;
@@ -231,7 +237,12 @@ class MotherCell:
                 col = col * signo
                 for x in range(j):
                     SW = (SW[0] + row, SW[1] + col)
-                    self.sweep.append((SW))
+                    sweep.append((SW))
+
+        shuff = sweep[1:8]
+        shuffle(shuff)
+        sweep = [sweep[0]] + shuff + sweep[8:]
+        return sweep
 
 
 '''-----------MAIN'''
@@ -239,18 +250,30 @@ if __name__ == '__main__':
 
     goverment_i = Goverment()
     num_feeds = 2
-    map_i = Map(30, num_feeds)#size, num of feeds
-    nature_i = Nature(10, num_feeds)#abundance and number of feeds
+    size = 100
+    abundance = 3
+    nature_i = Nature(3, num_feeds, size)#abundance and number of feeds
+    map_i = Map(size, num_feeds)#size, num of feeds
     goverment_i.clock()
 
-    goverment_i.createPopulation((2,2), map_i)
-    goverment_i.createPopulation((5,8), map_i)
+    goverment_i.createPopulation((15, 15), map_i, 1, 5)#position, map, agility, smellInstict
+    goverment_i.createPopulation((16, 16), map_i, 2, 2)
+    goverment_i.createPopulation((19, 16), map_i, 3, 4)
+    goverment_i.createPopulation((15, 14), map_i, 3, 4)
+    goverment_i.createPopulation((55, 35), map_i, 3, 4)
+    goverment_i.createPopulation((65, 35), map_i, 3, 4)
 
-    t_map = threading.Thread(target=map_i.ploting)
+    #t_map_cell = threading.Thread(target=map_i.ploting_cell)
+    t_map_feeds = threading.Thread(target=map_i.ploting_feeds)
     print ("Iniciada la vida")
     print ("Cell position: ", goverment_i.listCells[0].position)
-    t_map.start()
+    #t_map_cell.start()
+    t_map_feeds.start()
     time.sleep(1)
-    for x in range(200):
+    for x in range(3000):
         goverment_i.listCells[0].smell()
         goverment_i.listCells[1].smell()
+        goverment_i.listCells[2].smell()
+        goverment_i.listCells[3].smell()
+        goverment_i.listCells[4].smell()
+        goverment_i.listCells[5].smell()
