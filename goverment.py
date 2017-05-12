@@ -5,7 +5,7 @@ import threading
 from random import shuffle
 
 
-T = 0.1
+T = 1
 eps = 0.000000001
 agilityMin = 1/T
 
@@ -73,21 +73,19 @@ class Map:
             self.map_cells[pos[0]][pos[1]] = 1
             return True
 
-    def ploting_cell(self):
-        #pylab.axis([0, self.size, 0, self.size])
-        plt.ion()#interactive mode ON
-        while True:
-            plt.matshow(self.map_cells, fignum=1, cmap=plt.get_cmap('gray'), vmin=0, vmax=1)
-            plt.draw()
-            plt.pause(0.1)
-
-    def ploting_feeds(self):
+    def ploting(self):
         plt.ion()
-        plt.matshow(nature_i.map_feeds[0], fignum=1, cmap=plt.cm.gray)
+        plt.figure()
+        #plt.matshow(nature_i.map_feeds[0], fignum=1, cmap=plt.cm.gray)
         while True:
-            plt.matshow(nature_i.map_feeds[0], fignum=1, cmap=plt.cm.gray, vmin=0, vmax=nature_i.abundance)
+            f1 = plt.subplot2grid((2, 2), (0, 0))
+            f2 = plt.subplot2grid((2, 2), (0, 1))
+            f3 = plt.subplot2grid((2, 2), (1, 0), colspan=2)
+            f1.matshow(nature_i.map_feeds[0], cmap=plt.cm.gray, vmin=0, vmax=nature_i.abundance)
+            f2.matshow(nature_i.map_feeds[1], cmap=plt.cm.gray, vmin=0, vmax=nature_i.abundance)
+            f3.matshow(self.map_cells, cmap=plt.get_cmap('gray'), vmin=0, vmax=1)
             plt.draw()
-            plt.pause(0.1)
+            plt.pause(0.05)
 
 '''------------NATURE'''
 class Nature:
@@ -192,9 +190,9 @@ class MotherCell:
                         else:
                             self.eat((i, pos[0], pos[1]), nature_i)
                             self.position = self.virtualPos
-                            print('position: {}, virtualPos: {}feed({}) remain: {}. sweep: {}'.format(
-                                self.position,self.virtualPos, i, feeds, smellingPos))
-                        time.sleep(0.05)
+                            # print('position: {}, virtualPos: {}feed({}) remain: {}. sweep: {}'.format(
+                            #     self.position,self.virtualPos, i, feeds, smellingPos))
+                        time.sleep(0.0005)
                         return
 
 
@@ -250,30 +248,26 @@ if __name__ == '__main__':
 
     goverment_i = Goverment()
     num_feeds = 2
-    size = 100
+    size = 70
     abundance = 3
     nature_i = Nature(3, num_feeds, size)#abundance and number of feeds
     map_i = Map(size, num_feeds)#size, num of feeds
     goverment_i.clock()
 
-    goverment_i.createPopulation((15, 15), map_i, 1, 5)#position, map, agility, smellInstict
-    goverment_i.createPopulation((16, 16), map_i, 2, 2)
-    goverment_i.createPopulation((19, 16), map_i, 3, 4)
-    goverment_i.createPopulation((15, 14), map_i, 3, 4)
-    goverment_i.createPopulation((55, 35), map_i, 3, 4)
-    goverment_i.createPopulation((65, 35), map_i, 3, 4)
+    goverment_i.createPopulation((5, 5), map_i, 1, 5)#position, map, agility, smellInstict
+    goverment_i.createPopulation((20, 20), map_i, 2, 2)
+    goverment_i.createPopulation((40, 40), map_i, 3, 4)
 
-    #t_map_cell = threading.Thread(target=map_i.ploting_cell)
-    t_map_feeds = threading.Thread(target=map_i.ploting_feeds)
+    t_map_feeds = threading.Thread(target=map_i.ploting)
     print ("Iniciada la vida")
     print ("Cell position: ", goverment_i.listCells[0].position)
-    #t_map_cell.start()
+    print ("Cell position: ", goverment_i.listCells[1].position)
+    print ("Cell position: ", goverment_i.listCells[2].position)
+
     t_map_feeds.start()
     time.sleep(1)
-    for x in range(3000):
+    for x in range(30000):
         goverment_i.listCells[0].smell()
         goverment_i.listCells[1].smell()
         goverment_i.listCells[2].smell()
-        goverment_i.listCells[3].smell()
-        goverment_i.listCells[4].smell()
-        goverment_i.listCells[5].smell()
+        time.sleep(0.005)
